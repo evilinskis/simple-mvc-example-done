@@ -307,7 +307,7 @@ const updateLast = (req, res) => {
   });
 };
 
-// searchName for dogs
+// search for dogs by name then increase age
 const searchNameDog = async (req, res) => {
   if (!req.query.name) {
     return res.status(400).json({ error: 'Name is required to perform a search' });
@@ -315,7 +315,18 @@ const searchNameDog = async (req, res) => {
 
   let doc;
   try {
-    doc = await Dog.findOne({ name: req.query.name }).exec();
+
+    const updatePromise = Dog.findOneAndUpdate({name: req.query.name}, { $inc: { age: 1 } }, {
+      returnDocument: 'after',
+      sort: { createdDate: 'descending' },
+    }).lean().exec();
+
+   updatePromise.then((doc) => res.json({
+      name: doc.name,
+      breed: doc.breed,
+      age: doc.age,
+    }));
+
   } catch (err) {
     console.log(err);
     return res.status(500).json({ error: 'Something went wrong' });
@@ -325,25 +336,8 @@ const searchNameDog = async (req, res) => {
     return res.status(404).json({ error: 'No dogs found' });
   }
 
+
   return res.json({ name: doc.name, breed: doc.breed, age: doc.age });
-};
-
-const updateLastDog = (req, res) => {
-  const updatePromise = Dog.findOneAndUpdate({}, { $inc: { age: 1 } }, {
-    returnDocument: 'after',
-    sort: { createdDate: 'descending' },
-  }).lean().exec();
-
-  updatePromise.then((doc) => res.json({
-    name: doc.name,
-    breed: doc.breed,
-    age: doc.age,
-  }));
-
-  updatePromise.catch((err) => {
-    console.log(err);
-    return res.status(500).json({ error: 'Something went wrong' });
-  });
 };
 
 // A function to send back the 404 page.
@@ -365,7 +359,6 @@ module.exports = {
   setName,
   setNameDog,
   updateLast,
-  updateLastDog,
   searchName,
   searchNameDog,
   notFound,
