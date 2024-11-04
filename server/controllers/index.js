@@ -144,7 +144,6 @@ const getNameDog = async (req, res) => {
 
 // setname for dogs
 const setNameDog = async (req, res) => {
-
   if (!req.body.name || !req.body.breed || !req.body.age) {
     return res.status(400).json({ error: 'name, breed, and age are all required' });
   }
@@ -315,18 +314,17 @@ const searchNameDog = async (req, res) => {
 
   let doc;
   try {
-
-    const updatePromise = Dog.findOneAndUpdate({name: req.query.name}, { $inc: { age: 1 } }, {
+    doc = await Dog.findOne({ name: req.query.name }).exec();
+    const updatePromise = Dog.findOneAndUpdate({ name: req.query.name }, { $inc: { age: 1 } }, {
       returnDocument: 'after',
       sort: { createdDate: 'descending' },
     }).lean().exec();
 
-   updatePromise.then((doc) => res.json({
-      name: doc.name,
-      breed: doc.breed,
-      age: doc.age,
+    updatePromise.then((doc2) => res.json({
+      name: doc2.name,
+      breed: doc2.breed,
+      age: doc2.age,
     }));
-
   } catch (err) {
     console.log(err);
     return res.status(500).json({ error: 'Something went wrong' });
@@ -336,8 +334,6 @@ const searchNameDog = async (req, res) => {
     return res.status(404).json({ error: 'No dogs found' });
   }
 
-
-  return res.json({ name: doc.name, breed: doc.breed, age: doc.age });
 };
 
 // A function to send back the 404 page.
